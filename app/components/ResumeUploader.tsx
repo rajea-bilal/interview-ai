@@ -16,58 +16,45 @@ const ResumeUploader = () => {
     resumeText: "",
   });
 
-  const startInterview = async (text: string) => {
-    console.log('start Interview function inside resume uploader ran')
-    const messageToSend = `
-    INTERVIEW TYPE: ${interviewData.interviewType} 
-    --------
-    RESUME: ${interviewData.resumeText}
-    ---------
-    JOB DESCRIPTION: ${interviewData.jobDescriptionText}
 
-    ${interviewData.interviewType === 'leetcode' ? 
-  'Please generate coding questions in Markdown format. Use code blocks for code snippets' : 
-  'Please generate behavioral questions in plain text with structured formatting for clarity, but no need for code blocks.'}`
-    console.log("first message sent to openAI", messageToSend)
-    try {
-      const response = await fetchOpenAIQuestion(
-        [{ role: "user", content: messageToSend}], 
-        (message) => setInitialText(message)
-      )
+ useEffect(() => {
+  console.log("Checking effect trigger");
+  console.log("Resume Text:", interviewData.resumeText);
+  console.log("Interview Type:", interviewData.interviewType);
+  console.log("Job Description:", interviewData.jobDescriptionText);
 
-      return response
-      
-      console.log("First full AI Response from openAI", response)
-    } catch(error) {
-      console.error('Error starting interview', error);
-    }
-  }
+  const startInterview = async () => {
+    if (interviewData.resumeText && interviewData.jobDescriptionText) {
+      setIsLoading(true);
 
-  useEffect(() => {
-    console.log("Checking effect trigger");
-    console.log("Resume Text:", interviewData.resumeText);
-    console.log("Interview Type:", interviewData.interviewType);
-    console.log("Job Description:", interviewData.jobDescriptionText);
-    const fetchInterview = async () => {
-       if(interviewData.resumeText && interviewData.jobDescriptionText){
-      
-      setIsLoading(true)
-      
       try {
-        const response = await startInterview(interviewData.resumeText)
-        // show chat after successfull response from openAI
-        setShowChat(true)
-      } catch(error) {
+        const messageToSend = `
+        INTERVIEW TYPE: ${interviewData.interviewType} 
+        --------
+        RESUME: ${interviewData.resumeText}
+        ---------
+        JOB DESCRIPTION: ${interviewData.jobDescriptionText}
+
+        ${interviewData.interviewType === 'leetcode' ? 
+      'Please generate coding questions in Markdown format. Use code blocks for code snippets' : 
+      'Please generate behavioral questions in plain text with structured formatting for clarity, but no need for code blocks.'}`;
+
+        const response = await fetchOpenAIQuestion(
+          [{ role: "user", content: messageToSend}], 
+          (message) => setInitialText(message)
+        );
+
+        setShowChat(true);
+      } catch (error) {
         console.error('Error starting interview', error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-     }
     }
-   
-    fetchInterview()
-    
-  },[interviewData, startInterview])
+  };
+
+  startInterview();
+}, [interviewData]);
 
   return (
     <>
