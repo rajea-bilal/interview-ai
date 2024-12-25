@@ -1,57 +1,49 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { processHtmlContent } from "@/app/utils/processHtmlContent";
+import { processHtmlContent } from "@/app/utils/processHTMLContent";
 
 // Define the POST handler for the API route
 export async function POST(req: NextRequest) {
   try {
     // 1. Parse the incoming request body (assumes JSON format)
     const body = await req.json();
-    const { url } = body;  // Extract the URL from the parsed request body
+    const { url } = body;
 
     // 2. Check if the URL is missing from the request
     if (!url) {
-      // Return a 400 Bad Request response if the URL is not provided
       return new NextResponse(JSON.stringify({ error: "URL is required" }), {
         status: 400,
-        headers: {
-          "Content-Type": "application/json",  // Ensure response is JSON
-        },
+        headers: { "Content-Type": "application/json" },
       });
     }
 
     try {
-      // 3. Process the HTML content from the provided URL (scraping logic)
-      const textContent = await processHtmlContent(url);
+      // 3. Perform the scraping with a 10-second timeout
+      const textContent = await scrapeWithTimeout(url, 10000);  // 10s timeout
 
-      // 4. Check if the extraction failed or returned empty
+      // 4. Check if the scraper returned no content
       if (!textContent) {
         console.error("No text content extracted from URL:", url);
         return new NextResponse(
           JSON.stringify({
             error: "Failed to extract text content",
-            details: "The URL returned no text content",  // Informative message
+            details: "The scraper returned no content or invalid data",
           }),
           {
-            status: 500,  // Internal Server Error
-            headers: {
-              "Content-Type": "application/json",
-            },
+            status: 500,
+            headers: { "Content-Type": "application/json" },
           }
         );
       }
 
-      // 5. Return the successfully extracted text content as a JSON response
+      // 5. Return the successfully extracted text content
       return new NextResponse(JSON.stringify({ textContent }), {
         status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-      
+
     } catch (error) {
-      // 6. Handle errors during HTML processing or scraping
-      console.error("Error processing content:", error);
+      console.error("Scraping error:", error);
       return new NextResponse(
         JSON.stringify({
           error: "Failed to scrape the text content",
@@ -59,15 +51,11 @@ export async function POST(req: NextRequest) {
         }),
         {
           status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         }
       );
     }
-    
   } catch (error) {
-    // 7. Handle errors during request parsing (e.g., invalid JSON)
     console.error("Request processing error:", error);
     return new NextResponse(
       JSON.stringify({
@@ -76,10 +64,26 @@ export async function POST(req: NextRequest) {
       }),
       {
         status: 400,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       }
     );
+  }
+}
+
+// Simpler scraping function with timeout
+async function scrapeWithTimeout(url: string, timeout: number) {
+  const controller = new AbortController();  // Abort controller for timing out requests
+  const id = setTimeout(() => controller.abort(), timeout);  // Abort after timeout
+
+  try {
+    const textContent = await processHtmlContent(url, { signal: controller.signal });
+    clearTimeout(id);  // Clear timeout if scraping succeeds
+    return textContent;
+  } catch (error) {
+    clearTimeout(id);  // Ensure timeout is cleared on error
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Scraping timed out");
+    }
+    throw error;  // Throw other errors
   }
 }

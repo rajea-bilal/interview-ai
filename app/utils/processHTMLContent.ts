@@ -1,6 +1,6 @@
 import { JSDOM } from 'jsdom';
 
-export async function processHtmlContent(url: string): Promise<string | null> {
+export async function processHtmlContent(url: string, options?: { signal?: AbortSignal }): Promise<string | null> {
   try {
     const response = await fetch(url);
     const html = await response.text();
