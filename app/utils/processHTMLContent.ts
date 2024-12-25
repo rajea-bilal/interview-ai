@@ -2,28 +2,26 @@ import { JSDOM } from 'jsdom';
 
 export async function processHtmlContent(url: string, options?: { signal?: AbortSignal }): Promise<string | null> {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, options);
     const html = await response.text();
 
     // Create a virtual DOM using jsdom
     const dom = new JSDOM(html);
     const document = dom.window.document;
 
-    // Remove script and style elements
-    const scripts = document.getElementsByTagName('script');
-    const styles = document.getElementsByTagName('style');
+    // Early filtering - Remove unnecessary elements
+    const selectorsToRemove = [
+      'script', 'style', 'nav', 'footer', 'header', 'aside', '.ads', '.hidden', '.popup', '#sidebar'
+    ];
     
-    while (scripts.length > 0) {
-      scripts[0].parentNode?.removeChild(scripts[0]);
-    }
-    while (styles.length > 0) {
-      styles[0].parentNode?.removeChild(styles[0]);
-    }
+    selectorsToRemove.forEach(selector => {
+      document.querySelectorAll(selector).forEach(el => el.remove());
+    });
 
-    // Get all text content
+    // Get all text content after filtering
     const textContent = document.body.textContent || '';
     
-    // Clean up the text content
+    // Clean up the text content (remove excess spaces)
     const cleanedText = textContent
       .replace(/\s+/g, ' ')
       .trim();
