@@ -73,7 +73,7 @@ const Chat: React.FC<ChatProps> = ({ initialText, interviewData }) => {
   // AI context for the system
   const resumeMessage = {
     role: 'system',
-    content: `You help students prepare for technical interviews
+    content: `You help students prepare for technical interviews. Start the interview warmly.
     -------------------
     Interview Type: ${interviewType}
     -------------------

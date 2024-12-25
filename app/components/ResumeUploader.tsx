@@ -78,7 +78,7 @@ const ResumeUploader = () => {
     )}
    
        {showChat && (
-         <div className="w-full max-w-[500px] md:max-w-[750px] lg:max-w-[800px] mx-auto mt-8">
+         <div className="w-full max-w-[500px] md:max-w-[700px] lg:max-w-[800px] mx-auto mt-8">
           <p className="mb-4 text-transparent bg-gradient-to-r from-stone-500 via-stone-600 bg-clip-text animate-shine bg-[length:200%_100%] font-bold text-2xl md:text-2xl text-center leading-snug md:leading-[2.5rem]">
             {interviewData.interviewType} Interview
           </p>

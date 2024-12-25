@@ -14,6 +14,15 @@ export async function POST(req: NextRequest) {
     // go to this url and scrape the page
     const result = await client.scrape( url );
 
+    //check if the result ha san error property
+    if(result.error || !result.content) {
+      console.error("Scraping error", result.error || "No content found")
+      return NextResponse.json(
+        { error: 'Failed to scrape job description' },
+        { status: 500 }
+      )
+    }
+
     // parse HTML coming from scrapingAnt
     const root = parse(result.content)
 
