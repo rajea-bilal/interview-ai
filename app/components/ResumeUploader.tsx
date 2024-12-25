@@ -67,7 +67,7 @@ const ResumeUploader = () => {
    
     fetchInterview()
     
-  },[interviewData.resumeText, interviewData.jobDescriptionText])
+  },[interviewData, startInterview])
 
   return (
     <>
