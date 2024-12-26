@@ -1,55 +1,62 @@
 
-import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { processHtmlContent } from "@/app/utils/processHtmlContent";
 
-export const runtime = 'edge';
-
-type RequestBody = {
-  url: string;
-};
-
-// Helper function to add fetch timeout
-async function fetchWithTimeout(resource: string, options: any = {}, timeout = 15000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  const response = await fetch(resource, {
-    ...options,
-    signal: controller.signal,
-  });
-  clearTimeout(id);
-  return response;
-}
-
+// Handle scraping request
 export async function POST(req: NextRequest) {
-  const body: RequestBody = await req.json();
-  const { url } = body;
-
-  if (!url) {
-    return new NextResponse(JSON.stringify({ error: 'URL is required' }), {
-      status: 400,
-    });
-  }
-
-  const scrapingAntApiKey = process.env.SCRAPING_ANT_API_KEY;
-  const apiEndpoint = `https://api.scrapingant.com/v2/general?url=${encodeURIComponent(url)}&x-api-key=${scrapingAntApiKey}&browser=false&block_resource=stylesheet&block_resource=image`;
-
   try {
-    const response = await fetchWithTimeout(apiEndpoint, {}, 10000);  // 10s timeout
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    const body = await req.json();
+    const { url } = body;
+
+    if (!url) {
+      return new NextResponse(JSON.stringify({ error: "URL is required" }), {
+        status: 400,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
     }
 
-    const htmlContent = await response.text();
-    return new NextResponse(JSON.stringify({ textContent: htmlContent }), {
+    // Process URL to extract text
+    const textContent = await processHtmlContent(url);
+
+    // Handle cases where no content is returned
+    if (!textContent) {
+      return new NextResponse(
+        JSON.stringify({
+          error: "Failed to extract text content",
+          details: "No content was returned from the scraping API",
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // Return scraped text content
+    return new NextResponse(JSON.stringify({ textContent }), {
       status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
   } catch (error) {
-    console.error('Error during scraping:', error);
+    console.error("Error in scraper endpoint:", error);
     return new NextResponse(
-      JSON.stringify({ error: 'Scraping failed', details: (error as Error).message }),
-      { status: 500 }
+      JSON.stringify({
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
     );
   }
 }
-
