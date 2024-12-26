@@ -26,23 +26,25 @@ export async function POST(req: NextRequest) {
   try {
     const response = await fetch(apiEndpoint);
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();  // Log the actual error response
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
 
     const htmlContent = await response.text();
-
+    console.log("htmlContent", htmlContent)
     return new NextResponse(JSON.stringify({ textContent: htmlContent }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
       },
     });
-  } catch (error) {
-    console.error('Error while calling ScrapingAnt:', error);
-    return new NextResponse(JSON.stringify({ error: 'An error occurred during scraping', details: error }), {
-      status: 500,
-      headers: {
-        'Content-Type': 'application/json',
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error('Error while calling ScrapingAnt:', error.message);
+      return new NextResponse(JSON.stringify({ error: 'An error occurred during scraping', details: error.message }), {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
       },
     });
   }
