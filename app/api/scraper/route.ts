@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error('Error during scraping:', error);
     return new NextResponse(
-      JSON.stringify({ error: 'Scraping failed', details: error.message }),
+      JSON.stringify({ error: 'Scraping failed', details: (error as Error).message }),
       { status: 500 }
     );
   }
