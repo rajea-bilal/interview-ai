@@ -2,42 +2,28 @@ import { JSDOM } from 'jsdom';
 
 export async function processHtmlContent(url: string): Promise<string | null> {
   try {
-    const scrapingAntApiKey = process.env.SCRAPING_ANT_API_KEY;
-    if (!scrapingAntApiKey) {
-      throw new Error("ScrapingAnt API key is missing.");
-    }
-
-    // ScrapingAnt API endpoint with parameters
-    const apiEndpoint = `https://api.scrapingant.com/v2/general?url=${encodeURIComponent(url)}&x-api-key=${scrapingAntApiKey}&browser=false&block_resource=stylesheet&block_resource=image&block_resource=media`;
-
-    // Fetch the HTML through ScrapingAnt
-    const response = await fetch(apiEndpoint);
-
-    // Handle non-200 responses
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`ScrapingAnt Error: ${response.status} - ${errorText}`);
-    }
-
-    // Extract HTML content
+    const response = await fetch(url);
     const html = await response.text();
 
-    // Create virtual DOM using jsdom
+    // Create a virtual DOM using jsdom
     const dom = new JSDOM(html);
     const document = dom.window.document;
 
-    // Remove scripts and styles to clean up the DOM
-    const scripts = document.getElementsByTagName('script');
-    const styles = document.getElementsByTagName('style');
-    
-    while (scripts.length > 0) {
-      scripts[0].parentNode?.removeChild(scripts[0]);
-    }
-    while (styles.length > 0) {
-      styles[0].parentNode?.removeChild(styles[0]);
+    // Extract JSON-LD if available
+    const jsonLdElement = document.querySelector('script[type="application/ld+json"]');
+    if (jsonLdElement) {
+      const jsonLd = JSON.parse(jsonLdElement.textContent || '{}');
+      if (jsonLd.description) {
+        return jsonLd.description.replace(/\s+/g, ' ').trim();
+      }
     }
 
-    // Extract text content from the cleaned HTML
+    // Remove script and style elements to clean up the DOM
+    ['script', 'style'].forEach(tag => {
+      document.querySelectorAll(tag).forEach(el => el.remove());
+    });
+
+    // Fallback: Get all text content from the body
     const textContent = document.body.textContent || '';
     const cleanedText = textContent.replace(/\s+/g, ' ').trim();
 

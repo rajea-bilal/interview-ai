@@ -24,6 +24,8 @@ const RequestForm = ({ interviewData, setInterviewData, setIsLoading, isLoading,
 
   const isFormValid = interviewType !== "" && jobDescriptionUrl !== "" || jobDescriptionText !== "";  
 
+  
+
   const readResume = async (pdfFile: File | undefined) => {
  
     if (!pdfFile) return;
@@ -70,12 +72,15 @@ const RequestForm = ({ interviewData, setInterviewData, setIsLoading, isLoading,
     }));
   }
 
+
    const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Upload clicked'); // Add this
     if (!isFormValid) {
       alert("Please select an interview type first");
       return;
     }
 
+    console.log('clicked on upload resume button')
     // get the file from the event
     const file = event.target.files?.[0];
   

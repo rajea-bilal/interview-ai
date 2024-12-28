@@ -1,7 +1,32 @@
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { processHtmlContent } from "@/app/utils/processHtmlContent";
+import { processHtmlContent } from "@/app/utils/processHTMLContent";
+import { OpenAI } from 'openai';
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Summarization function using OpenAI GPT
+async function summarizeText(text: string): Promise<string | null> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        { role: "system", content: "Summarize job descriptions to highlight the role, responsibilities, and required skills." },
+        { role: "user", content: `Summarize this job description:\n\n${text}` },
+      ],
+      max_tokens: 1000,
+    });
+
+    return response.choices[0]?.message?.content || "Summary not available.";
+  } catch (error) {
+    console.error("Error summarizing text:", error);
+    return null;
+  }
+}
 
 // Handle scraping request
 export async function POST(req: NextRequest) {
@@ -18,15 +43,15 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Process URL to extract text
+    // Process URL to extract text content
     const textContent = await processHtmlContent(url);
 
-    // Handle cases where no content is returned
+    // Handle no content scenario
     if (!textContent) {
       return new NextResponse(
         JSON.stringify({
           error: "Failed to extract text content",
-          details: "No content was returned from the scraping API",
+          details: "The URL returned no content, likely due to JavaScript rendering or blocks.",
         }),
         {
           status: 500,
@@ -37,8 +62,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Return scraped text content
-    return new NextResponse(JSON.stringify({ textContent }), {
+    // Summarize if content exceeds the token limit
+    let finalText = textContent;
+    if (textContent.length > 8000) {
+      console.log("Text too long – summarizing...");
+      const summary = await summarizeText(textContent);
+      if (summary) {
+        finalText = summary;
+      }
+    }
+
+    console.log('finalText', finalText)
+    // Return the scraped/summarized text content
+    return new NextResponse(JSON.stringify({ textContent: finalText }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -46,6 +82,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error in scraper endpoint:", error);
+
     return new NextResponse(
       JSON.stringify({
         error: "Internal server error",
