@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { processHtmlContent } from "@/app/utils/processHTMLContent";
 import { OpenAI } from 'openai';
 
-// Initialize OpenAI client
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
 
     // Process URL to extract text content
     const textContent = await processHtmlContent(url);
-
+    console.log('textContent from processHtmlContent', textContent)
+    console.log('textContent length', textContent?.length)
     // Handle no content scenario
     if (!textContent) {
       return new NextResponse(

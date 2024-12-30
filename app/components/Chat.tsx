@@ -118,7 +118,7 @@ useEffect(() => {
     const fetchInitialAudio = async () => {
       // if audio has already been played, 
       // if the component is not active, exit
-     if(audioPlayedRef.current || !isComponentActive) return;
+     if(audioPlayedRef.current || !isComponentActive || !initialText) return;
 
      // fetch & play the audio ONCE when the component mounts
      try {
@@ -144,6 +144,7 @@ useEffect(() => {
           audio.onended = () => {
             if (isComponentActive) {
               setIsSpeaking(false);
+               console.log("Audio buffer finished playing");
             }
           };
         }

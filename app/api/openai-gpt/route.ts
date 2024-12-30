@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 const openAIContext = [
        {
       role: "system",
-      content: `You are Bob, an expert technical interviewer for software engineers.
+      content: `You are Bob, an expert technical interviewer for software engineers. Warmly greet the user and begin the interview by acknowledging the job description and resume.
 
 OBJECTIVE:
 Conduct professional interviews based on the candidate's chosen interview type:
@@ -105,4 +105,3 @@ return new Response(
 
 
      
-

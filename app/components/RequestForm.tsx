@@ -57,7 +57,9 @@ const RequestForm = ({ interviewData, setInterviewData, setIsLoading, isLoading,
   }
 
    const scrapeJobDescription = async (url: string) => {
-    const response = await fetch(`/api/scraper`, {
+
+    try {
+        const response = await fetch(`/api/scraper`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,10 +68,24 @@ const RequestForm = ({ interviewData, setInterviewData, setIsLoading, isLoading,
     });
     const responseData = await response.json();
     console.log('jobDescriptionFromScraper', responseData.textContent)
+
+     // Fallback if the scraper returns empty or problematic content
+    const fallbackText = "The job description could not be retrieved. Proceeding with resume-driven interview.";
+
     setInterviewData(data => ({
       ...data,
-      jobDescriptionText: responseData.textContent
+      jobDescriptionText: responseData.textContent || fallbackText,
     }));
+    } catch(error) {
+       console.error('Error scraping job description:', error);
+    setInterviewData(data => ({
+      ...data,
+      jobDescriptionText: "The job description could not be retrieved. Proceeding with resume-driven interview."
+    }));
+    } finally {
+    setIsLoading(false);
+  }
+  
   }
 
 

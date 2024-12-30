@@ -9,21 +9,18 @@ export async function processHtmlContent(url: string): Promise<string | null> {
     const dom = new JSDOM(html);
     const document = dom.window.document;
 
-    // Extract JSON-LD if available
-    const jsonLdElement = document.querySelector('script[type="application/ld+json"]');
-    if (jsonLdElement) {
-      const jsonLd = JSON.parse(jsonLdElement.textContent || '{}');
-      if (jsonLd.description) {
-        return jsonLd.description.replace(/\s+/g, ' ').trim();
-      }
+    // Remove script and style elements for cleaner output
+    const scripts = document.getElementsByTagName('script');
+    const styles = document.getElementsByTagName('style');
+
+    while (scripts.length > 0) {
+      scripts[0].parentNode?.removeChild(scripts[0]);
+    }
+    while (styles.length > 0) {
+      styles[0].parentNode?.removeChild(styles[0]);
     }
 
-    // Remove script and style elements to clean up the DOM
-    ['script', 'style'].forEach(tag => {
-      document.querySelectorAll(tag).forEach(el => el.remove());
-    });
-
-    // Fallback: Get all text content from the body
+    // Extract and clean text content from the body
     const textContent = document.body.textContent || '';
     const cleanedText = textContent.replace(/\s+/g, ' ').trim();
 
