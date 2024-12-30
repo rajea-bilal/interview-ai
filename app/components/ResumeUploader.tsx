@@ -7,7 +7,6 @@ const ResumeUploader = () => {
   const [showChat, setShowChat] = useState(false);
   const [initialText, setInitialText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [startInterviewFlag, setStartInterviewFlag] = useState(false);
   const [interviewData, setInterviewData] = useState({
     interviewType: "",
     jobDescriptionText: "",
@@ -15,19 +14,17 @@ const ResumeUploader = () => {
   });
 
   useEffect(() => {
-    console.log("Triggering effect...");
-    console.log("Resume Text:", interviewData.resumeText);
-    console.log("Interview Type:", interviewData.interviewType);
-    console.log("Job Description:", interviewData.jobDescriptionText);
+
+ 
 
     const startInterview = async () => {
       if (
       interviewData.resumeText && 
-      (interviewData.jobDescriptionText || !isLoading)  // Ensures fallback
+      (interviewData.jobDescriptionText || !isLoading)  
     ) {
         setIsLoading(true);
 
-        const jobDescription = interviewData.jobDescriptionText || "The job description could not be retrieved. Proceeding with resume-driven interview.";
+        const jobDescription = interviewData.jobDescriptionText || "The job description could not be retrieved. Proceeding with resume-driven interview, but first acknowledge the resume and explain that you will be using it to guide the interview since the job description is not available.";
        
 
         try {
